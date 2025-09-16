@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relevé Maintenance Studios</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h2 { text-align: center; }
+    input, textarea, button, select { width: 100%; padding: 8px; margin: 6px 0; border-radius: 6px; border: 1px solid #ccc; }
+    button { background: #2e86de; color: white; font-weight: bold; cursor: pointer; }
+    button:hover { background: #1e5fad; }
+    .item { border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin: 10px 0; }
+    .done { background: #d4edda; }
+  </style>
+</head>
+<body>
+  <h2>📋 Relevé Maintenance Studios</h2>
+
+  <label>Numéro du studio :</label>
+  <input type="text" id="studio" placeholder="Ex : 101">
+
+  <label>Élément :</label>
+  <input type="text" id="element" placeholder="Ex : Climatisation">
+
+  <label>État constaté :</label>
+  <input type="text" id="etat" placeholder="Ex : Ne fonctionne pas">
+
+  <label>Commentaire :</label>
+  <textarea id="commentaire" placeholder="Détails..."></textarea>
+
+  <button onclick="ajouterElement()">➕ Ajouter</button>
+
+  <label>🔍 Rechercher :</label>
+  <input type="text" id="search" placeholder="Studio ou élément" onkeyup="rechercher()">
+
+  <div id="liste"></div>
+
+  <button onclick="exporterExcel()">📤 Exporter Excel</button>
+
+  <script>
+    let donnees = [];
+
+    function ajouterElement() {
+      const studio = document.getElementById("studio").value.trim();
+      const element = document.getElementById("element").value.trim();
+      const etat = document.getElementById("etat").value.trim();
+      const commentaire = document.getElementById("commentaire").value.trim();
+
+      if (!studio || !element) {
+        alert("Veuillez saisir au moins un numéro de studio et un élément.");
+        return;
+      }
+
+      const item = { studio, element, etat, commentaire, fait: false };
+      donnees.push(item);
+      afficherListe();
+
+      document.getElementById("element").value = "";
+      document.getElementById("etat").value = "";
+      document.getElementById("commentaire").value = "";
+    }
+
+    function afficherListe() {
+      const liste = document.getElementById("liste");
+      liste.innerHTML = "";
+      donnees.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "item" + (item.fait ? " done" : "");
+        div.innerHTML = `
+          <strong>Studio :</strong> ${item.studio}<br>
+          <strong>Élément :</strong> ${item.element}<br>
+          <strong>État :</strong> ${item.etat}<br>
+          <strong>Commentaire :</strong> ${item.commentaire}<br>
+          <button onclick="marquerFait(${index})">✅ Marquer fait</button>
+        `;
+        liste.appendChild(div);
+      });
+    }
+
+    function marquerFait(index) {
+      donnees[index].fait = true;
+      afficherListe();
+    }
+
+    function rechercher() {
+      const terme = document.getElementById("search").value.toLowerCase();
+      const liste = document.getElementById("liste");
+      liste.innerHTML = "";
+      donnees.filter(item =>
+        item.studio.toLowerCase().includes(terme) ||
+        item.element.toLowerCase().includes(terme)
+      ).forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "item" + (item.fait ? " done" : "");
+        div.innerHTML = `
+          <strong>Studio :</strong> ${item.studio}<br>
+          <strong>Élément :</strong> ${item.element}<br>
+          <strong>État :</strong> ${item.etat}<br>
+          <strong>Commentaire :</strong> ${item.commentaire}<br>
+        `;
+        liste.appendChild(div);
+      });
+    }
+
+    function exporterExcel() {
+      const feuille = XLSX.utils.json_to_sheet(donnees);
+      const classeur = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(classeur, feuille, "Maintenance");
+      XLSX.writeFile(classeur, "releve_maintenance.xlsx");
+    }
+  </script>
+</body>
+</html>
